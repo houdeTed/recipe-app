@@ -1,0 +1,12 @@
+{
+  "name": "recipe-app",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "client:dev": "cd client && npm run dev",
+    "server:dev": "cd server && npx tsx watch src/index.ts"
+  },
+  "devDependencies": {
+    "concurrently": "latest"
+  }
+}
