@@ -1,0 +1,273 @@
+============================================================
+  Recipe App — 项目文件分类 & 运行命令记录
+============================================================
+
+一、17 个手写文件（按功能分为 4 层）
+------------------------------------------------------------
+
+  【基础设施层 — 根目录】
+
+ 1. .gitignore
+    告诉 git 不要上传 node_modules/ 和 dist/ 文件夹
+    内容: 两行排除规则 (node_modules/, dist/)
+
+ 2. package.json
+    根项目配置文件, 定义了一键启动前后端的脚本
+    内容: 3 个 npm scripts (dev / client:dev / server:dev) + 依赖 concurrently
+
+
+  【前端配置层 — client/】
+
+ 3. client/vite.config.ts
+    Vite 构建工具的配置文件
+    内容: 注册 React 插件 + Tailwind CSS 插件 + 配置 /api 代理到 localhost:3001
+
+ 4. client/src/index.css
+    全局样式入口文件, 只有一行代码
+    内容: @import "tailwindcss" (引入 Tailwind CSS 所有工具类)
+
+
+  【前端应用层 — client/src/】
+
+ 5. client/src/App.tsx
+    应用的根组件, 定义页面路由规则
+    内容: BrowserRouter 包裹, 两个路由: "/" 指向首页, "/dish/:id" 指向详情页
+
+ 6. client/src/types/index.ts
+    TypeScript 类型定义, 所有组件共享的数据结构
+    内容: 4 个接口 — Dish, DishSummary, Ingredient, Step
+
+ 7. client/src/services/api.ts
+    封装与后端通信的 fetch 请求, 组件不直接写 fetch
+    内容: 3 个异步函数 — fetchAllDishes(全量), searchDishes(搜索), fetchDishById(详情)
+
+ 8. client/src/components/SearchBox.tsx
+    搜索框组件, 输入框 + 搜索按钮
+    内容: 受控 input + onSearch 回调, 支持回车触发搜索
+
+ 9. client/src/components/DishCard.tsx
+    单张菜肴卡片组件
+    内容: 图片 + 菜名 + 简介, hover 时放大上浮动画
+
+10. client/src/components/PopularDishes.tsx
+    常见菜肴网格布局组件
+    内容: 标题 "常见菜肴" + 响应式网格 (2~4 列) + 渲染多个 DishCard
+
+11. client/src/pages/HomePage.tsx
+    首页页面, 组合搜索框和菜肴网格
+    内容: 大标题 + 副标题 + SearchBox + PopularDishes, 页面加载时从后端获取菜肴列表
+
+12. client/src/pages/DetailPage.tsx
+    详情页页面, 展示某道菜的完整信息
+    内容: 顶部大图 + 菜名 + 简介 + 材料表格 + 步骤列表 (带序号), 包含 loading/错误/空 三种状态
+
+
+  【后端层 — server/】
+
+13. server/package.json
+    后端项目配置文件
+    内容: 依赖声明 (express, mysql2, cors, tsx, typescript), dev 启动脚本
+
+14. server/tsconfig.json
+    后端 TypeScript 编译配置
+    内容: 目标 ES2022, 使用 ESM 模块系统, 严格模式
+
+15. server/src/index.ts
+    Express 应用入口, 启动 HTTP 服务
+    内容: 注册 cors 中间件, 挂载 /api/dishes 路由, 监听 3001 端口
+
+16. server/src/database.ts
+    MySQL 数据库连接配置
+    内容: 使用 mysql2/promise 创建连接池, 配置主机/用户/密码/库名, 最大 10 个连接
+
+17. server/src/routes/dishes.ts
+    菜肴相关的 API 路由, 处理 HTTP 请求并与 MySQL 交互
+    内容:
+      - GET /         搜索 (LIKE 模糊匹配) 或全量返回
+      - GET /:id      根据 id 查详情 (JOIN 三张表, 返回菜 + 材料 + 步骤)
+
+
+二、其余文件（自动生成，未手动修改）
+------------------------------------------------------------
+
+  package-lock.json (3 个: 根/client/server)   — npm 自动
+  client/index.html                            — Vite 脚手架
+  client/.gitignore                            — Vite 脚手架
+  client/README.md                             — Vite 脚手架
+  client/eslint.config.js                      — Vite 脚手架
+  client/public/favicon.svg                    — Vite 脚手架
+  client/public/icons.svg                      — Vite 脚手架
+  client/tsconfig.app.json                     — Vite 脚手架
+  client/tsconfig.json                         — Vite 脚手架
+  client/tsconfig.node.json                    — Vite 脚手架
+  client/package.json                          — Vite 生成，npm 自动追加依赖
+
+
+三、项目外运行的命令
+------------------------------------------------------------
+
+[创建前端项目]
+  npx create-vite@latest client -- --template react-ts
+
+[安装前端依赖]
+  cd client
+  npm install
+  npm install react-router-dom tailwindcss @tailwindcss/vite
+
+[安装后端依赖]
+  cd server
+  npm install
+  npm install mysql2
+
+[安装根目录依赖]
+  cd ../
+  npm install
+
+[MySQL 建库]
+  "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql" -u root -p123456
+
+  CREATE DATABASE IF NOT EXISTS recipe_app
+    DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  USE recipe_app;
+
+  CREATE TABLE dishes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    image_url VARCHAR(500) NOT NULL,
+    description VARCHAR(500) NOT NULL
+  );
+  CREATE TABLE ingredients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    dish_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    amount VARCHAR(50) NOT NULL,
+    FOREIGN KEY (dish_id) REFERENCES dishes(id)
+  );
+  CREATE TABLE steps (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    dish_id INT NOT NULL,
+    step_number INT NOT NULL,
+    instruction VARCHAR(500) NOT NULL,
+    FOREIGN KEY (dish_id) REFERENCES dishes(id)
+  );
+
+[MySQL 插入种子数据]
+  插入 5 道菜 (宫保鸡丁, 麻婆豆腐, 红烧肉, 糖醋里脊, 西红柿炒鸡蛋)
+  每道菜含材料 + 步骤
+
+[类型检查]
+  cd client && npx tsc --noEmit
+  cd server && npx tsc --noEmit
+
+[启动开发]
+  cd client
+  npm run dev          ← 仅前端
+
+  cd server
+  npm run dev          ← 仅后端
+
+  cd ../
+  npm run dev          ← 前后端同时启动 (concurrently)
+
+[Git 推送]
+  git add .gitignore package.json package-lock.json client/
+  git commit -m "feat: init project ..."
+  git push -u origin main
+
+
+四、项目结构
+------------------------------------------------------------
+
+  recipe-app/
+  ├── package.json                    ← 根: npm run dev 一键启动
+  ├── client/                         ← 前端 (Vite + React + TS + Tailwind)
+  │   ├── src/
+  │   │   ├── components/             ← SearchBox, DishCard, PopularDishes
+  │   │   ├── pages/                  ← HomePage, DetailPage
+  │   │   ├── services/api.ts         ← 封装 fetch
+  │   │   ├── types/index.ts          ← 类型定义
+  │   │   ├── App.tsx                 ← 路由
+  │   │   ├── main.tsx                ← 入口
+  │   │   └── index.css               ← Tailwind 入口
+  │   └── vite.config.ts              ← Vite + Tailwind 插件 + API 代理
+  └── server/                         ← 后端 (Express + MySQL)
+      ├── src/
+      │   ├── index.ts                ← 入口, 端口 3001
+      │   ├── database.ts             ← MySQL 连接池
+      │   └── routes/dishes.ts        ← /api/dishes 路由
+      ├── package.json
+      └── tsconfig.json
+
+
+五、数据库信息
+------------------------------------------------------------
+
+  类型:     MySQL 8.0
+  库名:     recipe_app
+  表:       dishes, ingredients, steps
+  连接:     mysql2/promise 连接池
+  主机:     localhost
+  用户:     root
+  密码:     123456
+
+
+六、API 接口
+------------------------------------------------------------
+
+  GET /api/dishes                    → 所有菜肴列表
+  GET /api/dishes?search=关键词       → 按菜名模糊搜索
+  GET /api/dishes/:id                → 菜肴详情 (含材料和步骤)
+
+
+七、开发工具及作用
+------------------------------------------------------------
+
+  [构建与运行]
+  Vite              前端构建工具, 启动开发服务器(热更新), 打包生产代码
+  tsx               TypeScript 执行器, 直接跑 .ts 文件无需提前编译
+  concurrently      同时启动多个 npm 脚本, 一键启动前后端
+
+  [前端框架/库]
+  React 18          UI 框架, 组件化开发, 数据变了页面自动更新
+  React Router v6   前端路由, 管理页面跳转不刷新浏览器
+  Tailwind CSS v4   原子化 CSS 工具, 样式写在 className 上, 不用写 .css 文件
+
+  [后端框架/库]
+  Express           后端 HTTP 框架, 处理请求和响应, 定义 API 路由
+  mysql2            MySQL 数据库驱动, Node.js 连接和查询 MySQL
+  cors              CORS 中间件, 允许前端跨端口访问后端 (5173 → 3001)
+
+  [语言]
+  TypeScript        为 JS 添加类型系统, 编译时发现错误, 代码提示更智能
+
+  [数据库]
+  MySQL 8.0         关系型数据库, 存储菜肴/材料/步骤数据
+
+  [包管理]
+  npm               Node.js 包管理器, 安装/卸载/管理第三方依赖
+
+  [版本控制]
+  Git               代码版本管理, 记录每次修改, 推送到 GitHub
+
+  [编辑器]
+  VS Code           代码编辑器, 写代码、看代码、调试
+
+
+八、各工具在项目中的角色关系
+------------------------------------------------------------
+
+  你写代码 (VS Code)
+     ↓ 保存
+  TypeScript 检查类型错误
+     ↓ tsx 执行
+  Vite 编译打包  ────────────→  浏览器展示页面
+     ↓ fetch 请求
+  Express 接收 API 请求
+     ↓ mysql2 查询
+  MySQL 返回数据
+     ↓ JSON 响应
+  React 更新页面
+
+  版本控制: Git 贯穿全程, 随时记录 → 推送到 GitHub 备份
+
+============================================================
